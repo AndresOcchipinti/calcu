@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calc App</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0e0906;
+      --surface:    #1c100a;
+      --card:       #251409;
+      --display-bg: #120c07;
+      --btn-num:    #3a1f0f;
+      --btn-op:     #7a3a10;
+      --btn-extra:  #4e2a12;
+      --btn-eq:     #9e4a14;
+      --cream:      #e8c49a;
+      --gold:       #c9973a;
+      --muted:      #6b4a2a;
+      --shadow:     rgba(0,0,0,0.7);
+      --glow:       rgba(201,151,58,0.12);
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Fondo con textura */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(90,40,10,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(60,20,5,0.22) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Grilla de fondo sutil */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(201,151,58,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,151,58,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* Título */
+    .title-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .title-wrap h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .title-wrap span {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 4px;
+    }
+
+    /* Container principal */
+    .calc {
+      background: var(--card);
+      border-radius: 28px;
+      padding: 24px;
+      width: 340px;
+      box-shadow:
+        0 32px 80px var(--shadow),
+        0 0 0 1px rgba(201,151,58,0.08),
+        inset 0 1px 0 rgba(201,151,58,0.07);
+      animation: fadeUp 0.7s ease both;
+      position: relative;
+    }
+
+    /* Línea decorativa dorada arriba */
+    .calc::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      border-radius: 999px;
+      opacity: 0.5;
+    }
+
+    /* Display */
+    .display {
+      background: var(--display-bg);
+      border-radius: 16px;
+      padding: 16px 20px 14px;
+      margin-bottom: 18px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 4px;
+      border: 1px solid rgba(201,151,58,0.07);
+      box-shadow: inset 0 4px 16px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .display::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(201,151,58,0.2), transparent);
+    }
+
+    .operation {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      min-height: 18px;
+      letter-spacing: 0.05em;
+      transition: all 0.15s ease;
+    }
+
+    .result {
+      font-size: 38px;
+      font-weight: 500;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+      transition: all 0.1s ease;
+      word-break: break-all;
+      text-align: right;
+      text-shadow: 0 0 30px rgba(232,196,154,0.2);
+    }
+
+    /* Grid de botones */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 14px;
+      height: 58px;
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.06), transparent);
+      pointer-events: none;
+    }
+
+    button:active {
+      transform: scale(0.93);
+      filter: brightness(0.85);
+    }
+
+    button:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    /* Tipo numérico */
+    .btn-num {
+      background: var(--btn-num);
+      color: var(--cream);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    /* Tipo operador */
+    .btn-op {
+      background: var(--btn-op);
+      color: var(--cream);
+      box-shadow: 0 4px 12px rgba(122,58,16,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    /* Tipo extra (AC, +/-, %) */
+    .btn-extra {
+      background: var(--btn-extra);
+      color: #f5deb3;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    /* Igual */
+    .btn-eq {
+      background: var(--btn-eq);
+      color: var(--cream);
+      box-shadow: 0 4px 18px rgba(158,74,20,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    /* Cero ocupa 2 columnas */
+    .span2 { grid-column: span 2; }
+
+    /* Flash al presionar */
+    @keyframes flash {
+      0%   { background: rgba(201,151,58,0.25); }
+      100% { background: transparent; }
+    }
+
+    .flashing::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      animation: flash 0.2s ease forwards;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      animation: fadeUp 1s ease both;
+    }
+
+    /* Animaciones de entrada */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Resultado anima al cambiar */
+    .result.pop {
+      animation: pop 0.15s ease;
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title-wrap">
+    <h1>Calc App</h1>
+    <span>Python · Flet · v0.85</span>
+  </div>
+
+  <div class="calc">
+    <div class="display">
+      <div class="operation" id="operation"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="buttons">
+      <button class="btn-extra" data-val="AC">AC</button>
+      <button class="btn-extra" data-val="+/-">+/-</button>
+      <button class="btn-extra" data-val="%">%</button>
+      <button class="btn-op"    data-val="/">/</button>
+
+      <button class="btn-num" data-val="7">7</button>
+      <button class="btn-num" data-val="8">8</button>
+      <button class="btn-num" data-val="9">9</button>
+      <button class="btn-op"  data-val="*">×</button>
+
+      <button class="btn-num" data-val="4">4</button>
+      <button class="btn-num" data-val="5">5</button>
+      <button class="btn-num" data-val="6">6</button>
+      <button class="btn-op"  data-val="-">−</button>
+
+      <button class="btn-num" data-val="1">1</button>
+      <button class="btn-num" data-val="2">2</button>
+      <button class="btn-num" data-val="3">3</button>
+      <button class="btn-op"  data-val="+">+</button>
+
+      <button class="btn-num span2" data-val="0">0</button>
+      <button class="btn-num" data-val=".">.</button>
+      <button class="btn-eq"  data-val="=">=</button>
+    </div>
+  </div>
+
+  <div class="footer">☕ hecho con Python &amp; Flet</div>
+
+  <script>
+    let operand1 = 0;
+    let operand2 = 0;
+    let operator = "";
+    let newOperand = true;
+
+    const resultEl    = document.getElementById('result');
+    const operationEl = document.getElementById('operation');
+
+    function setResult(val) {
+      resultEl.textContent = val;
+      resultEl.classList.remove('pop');
+      void resultEl.offsetWidth; // reflow
+      resultEl.classList.add('pop');
+    }
+
+    function flashBtn(btn) {
+      btn.classList.remove('flashing');
+      void btn.offsetWidth;
+      btn.classList.add('flashing');
+      setTimeout(() => btn.classList.remove('flashing'), 200);
+    }
+
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        flashBtn(btn);
+        handle(btn.dataset.val);
+      });
+    });
+
+    function handle(data) {
+      const current = resultEl.textContent;
+
+      if (/^\d$/.test(data) || data === '.') {
+        if (current === '0' || newOperand) {
+          setResult(data === '.' ? '0.' : data);
+          newOperand = false;
+        } else {
+          if (data === '.' && current.includes('.')) return;
+          setResult(current + data);
+        }
+
+      } else if (['+', '-', '*', '/'].includes(data)) {
+        operand1 = parseFloat(current);
+        operator = data;
+        const sym = data === '*' ? '×' : data === '-' ? '−' : data;
+        operationEl.textContent = `${operand1} ${sym}`;
+        newOperand = true;
+
+      } else if (data === '=') {
+        operand2 = parseFloat(current);
+        const sym = operator === '*' ? '×' : operator === '-' ? '−' : operator;
+        operationEl.textContent = `${operand1} ${sym} ${operand2} =`;
+        let res;
+        if (operator === '+') res = operand1 + operand2;
+        else if (operator === '-') res = operand1 - operand2;
+        else if (operator === '*') res = operand1 * operand2;
+        else if (operator === '/') res = operand2 !== 0 ? operand1 / operand2 : 'Error';
+        setResult(typeof res === 'number' ? parseFloat(res.toPrecision(12)).toString() : res);
+        newOperand = true;
+
+      } else if (data === 'AC') {
+        setResult('0');
+        operationEl.textContent = '';
+        operand1 = operand2 = 0;
+        operator = '';
+        newOperand = true;
+
+      } else if (data === '+/-') {
+        const n = parseFloat(current);
+        if (!isNaN(n)) setResult((n * -1).toString());
+
+      } else if (data === '%') {
+        const n = parseFloat(current);
+        if (!isNaN(n)) setResult((n / 100).toString());
+      }
+    }
+
+    // Teclado físico
+    const keyMap = {
+      '0':'0','1':'1','2':'2','3':'3','4':'4',
+      '5':'5','6':'6','7':'7','8':'8','9':'9',
+      '.':'.', ',':'.',
+      '+':'+', '-':'-', '*':'*', '/':'/',
+      'Enter':'=', '=':'=',
+      'Escape':'AC', 'Backspace':'AC',
+      '%':'%',
+    };
+
+    document.addEventListener('keydown', e => {
+      const val = keyMap[e.key];
+      if (val) {
+        e.preventDefault();
+        handle(val);
+        // flash visual del botón correspondiente
+        const display = val === '*' ? '×' : val === '-' ? '−' : val;
+        document.querySelectorAll('button').forEach(b => {
+          if (b.dataset.val === val) flashBtn(b);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
